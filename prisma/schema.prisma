@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Branch {
+  branchid          String             @id @default(uuid())
+  branchname        String
+  course_undertaken CourseUndertaken[]
+
+  @@map("branch")
+}
+
+model Course {
+  courseid          String             @id @default(uuid())
+  coursename        String
+  course_undertaken CourseUndertaken[]
+
+  @@map("course")
+}
+
+model CourseUndertaken {
+  courseobjid String       @id @default(uuid())
+  courseid    String
+  teacherid   String
+  branchid    String
+  year        Int
+  semester    semesterenum
+  section     String       @db.Char(1)
+
+  branch  Branch  @relation(fields: [branchid], references: [branchid], onDelete: Cascade, onUpdate: Cascade, map: "fk_branchid")
+  course  Course  @relation(fields: [courseid], references: [courseid], onDelete: Cascade, onUpdate: Cascade, map: "fk_courseid")
+  teacher Teacher @relation(fields: [teacherid], references: [teacherid], onDelete: Cascade, onUpdate: Cascade, map: "fk_teacherid")
+
+  @@map("course_undertaken")
+}
+
+model Student {
+  studentid       String          @id @default(uuid())
+  name            String
+  email           String          @unique
+  usn             String          @unique @db.VarChar(10)
+  password        String?
+  student_details StudentDetails?
+
+  @@map("student")
+}
+
+model StudentDetails {
+  studentid       String      @id
+  age             String?
+  gender          genderenum?
+  address         String?
+  yearofadmission Int?
+  phno            String?     @db.VarChar(10)
+  student         Student     @relation(fields: [studentid], references: [studentid], onDelete: Cascade, onUpdate: Cascade, map: "fk_studentid")
+
+  @@map("student_details")
+}
+
+model Teacher {
+  teacherid         String             @id @default(uuid())
+  name              String
+  email             String             @unique
+  employeeid        String             @unique
+  password          String?
+  course_undertaken CourseUndertaken[]
+  teacher_details   TeacherDetails?
+
+  @@map("teacher")
+}
+
+model TeacherDetails {
+  teacherid     String      @id
+  age           String?
+  gender        genderenum?
+  address       String?
+  yearofjoining Int?
+  phno          String?     @db.VarChar(10)
+  teacher       Teacher     @relation(fields: [teacherid], references: [teacherid], onDelete: Cascade, onUpdate: Cascade, map: "fk_teacherid")
+
+  @@map("teacher_details")
+}
+
+enum genderenum {
+  Male
+  Female
+}
+
+enum semesterenum {
+  a1
+  a2
+  a3
+  a4
+  a5
+  a6
+  a7
+  a8
+}

@@ -1,5 +1,7 @@
 import express from "express";
 import {indexRouter} from "./routes/index";
+import dotenv from "dotenv";
+dotenv.config();
 
 const api = express();
 api.use(express.json());

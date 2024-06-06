@@ -7,7 +7,12 @@ import bcrypt from "bcrypt";
 export const signup = async (req: Request, res: Response) => {
   const { name, usn, email, password } = req.body;
   try {
-    const { success } = signupSchemaStudent.safeParse({ name, usn, password, email });
+    const { success } = signupSchemaStudent.safeParse({
+      name,
+      usn,
+      password,
+      email,
+    });
     if (!success) {
       return res.status(401).json({
         err: "invalid data type",
@@ -40,7 +45,7 @@ export const signup = async (req: Request, res: Response) => {
       err: "internal server error" + err.message,
     });
   }
-}
+};
 
 export const signin = async (req: any, res: any) => {
   const { usn, password } = req.body;

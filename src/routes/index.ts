@@ -1,10 +1,10 @@
-const express =  require('express');
-const router = express.Router();
+import express from "express";
+const indexRouter = express.Router();
 
-const studentRouter = require('./student');
-const teacherRouter = require('./teacher');
+import {router as studentRouter} from "./student"
+import {router as teacherRouter} from "./teacher";
 
-router.use('/student',studentRouter);
-router.use('teacher',teacherRouter);
+indexRouter.use('/student', studentRouter);
+indexRouter.use('/teacher', teacherRouter);
 
-module.exports = router;
+export {indexRouter};

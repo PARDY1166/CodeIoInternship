@@ -1,5 +1,5 @@
 import express from "express";
-import { signin, signup } from "../controllers/teacherController";
+import { signin, signup } from "../../controllers/teacherController";
 
 export const api = express();
 

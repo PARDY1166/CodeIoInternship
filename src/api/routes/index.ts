@@ -1,5 +1,5 @@
 import express from "express";
-import { apis } from "../api/api";
+import { apis } from "../api";
 
 export const api = express();
 

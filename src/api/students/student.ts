@@ -1,5 +1,5 @@
 import express from "express";
-import { signin, signup } from "../../controllers/studentController";
+import { signin, signup } from "../controllers/studentController";
 import { Request, Response } from "express";
 import prisma from "../../utils/db";
 

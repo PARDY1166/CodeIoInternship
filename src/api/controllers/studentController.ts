@@ -1,13 +1,18 @@
 import { Request, Response } from "express";
-import prisma from "../utils/db";
+import prisma from "../../utils/db";
 import jwt from "jsonwebtoken";
-import { signInSchema, signupSchemaTeacher } from "../zod";
+import { signInSchema, signupSchemaStudent } from "../../zod";
 import bcrypt from "bcrypt";
 
 export const signup = async (req: Request, res: Response) => {
-  const { name, employeeid, email, password } = req.body;
+  const { name, usn, email, password } = req.body;
   try {
-    const { success } = signupSchemaTeacher.safeParse({ name, employeeid, password, email });
+    const { success } = signupSchemaStudent.safeParse({
+      name,
+      usn,
+      password,
+      email,
+    });
     if (!success) {
       return res.status(401).json({
         err: "invalid data type",
@@ -21,10 +26,10 @@ export const signup = async (req: Request, res: Response) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await prisma.teacher.create({
+    const result = await prisma.student.create({
       data: {
         name,
-		employeeid,
+        usn,
         email,
         password: hashedPassword,
       },
@@ -40,7 +45,7 @@ export const signup = async (req: Request, res: Response) => {
       err: "internal server error" + err.message,
     });
   }
-}
+};
 
 export const signin = async (req: any, res: any) => {
   const { usn, password } = req.body;
@@ -96,4 +101,4 @@ export const signin = async (req: any, res: any) => {
       err: "internal server error",
     });
   }
-}
+};

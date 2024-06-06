@@ -1,5 +1,5 @@
 import express from "express";
-import { api as indexRouter } from "./routes/index";
+import { api as indexRouter } from "./api/routes/index";
 import dotenv from "dotenv";
 dotenv.config();
 

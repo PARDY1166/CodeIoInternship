@@ -1,10 +1,9 @@
 import express from "express";
-const indexRouter = express.Router();
 
-import {router as studentRouter} from "./student"
-import {router as teacherRouter} from "./teacher";
+export const api = express();
 
-indexRouter.use('/student', studentRouter);
-indexRouter.use('/teacher', teacherRouter);
+import {api as studentApi} from "./student"
+import {api as teacherApi} from "./teacher";
 
-export {indexRouter};
+api.use('/student', studentApi);
+api.use('/teacher', teacherApi);

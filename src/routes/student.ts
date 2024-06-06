@@ -1,9 +1,7 @@
 import {signin,signup} from "../controllers/studentController"
+import express from "express";
 
-const express = require('express');
-const router = express.Router();
+export const api = express();
 
-router.post('/signin',signin);
-router.post('/signup',signup);
-
-export {router}
+api.post('/signin',signin);
+api.post('/signup',signup);

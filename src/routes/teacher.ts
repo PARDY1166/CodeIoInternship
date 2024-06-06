@@ -1,4 +1,3 @@
-const express = require('express');
-const router = express.Router();
+import express from "express";
 
-export {router}
+export const api = express();

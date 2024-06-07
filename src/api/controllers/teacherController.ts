@@ -5,9 +5,14 @@ import { signInSchema, signupSchemaTeacher } from "../../zod";
 import bcrypt from "bcrypt";
 
 export const signup = async (req: Request, res: Response) => {
-  const { name, employeeid, email, password } = req.body;
+  const { name, employeeId, email, password } = req.body;
   try {
-    const { success } = signupSchemaTeacher.safeParse({ name, employeeid, password, email });
+    const { success } = signupSchemaTeacher.safeParse({
+      name,
+      employeeId,
+      password,
+      email,
+    });
     if (!success) {
       return res.status(401).json({
         err: "invalid data type",
@@ -24,7 +29,7 @@ export const signup = async (req: Request, res: Response) => {
     const result = await prisma.teacher.create({
       data: {
         name,
-		employeeid,
+        employeeId,
         email,
         password: hashedPassword,
       },
@@ -40,9 +45,9 @@ export const signup = async (req: Request, res: Response) => {
       err: "internal server error" + err.message,
     });
   }
-}
+};
 
-export const signin = async (req: any, res: any) => {
+export const signin = async (req: Request, res: Response) => {
   const { usn, password } = req.body;
 
   try {
@@ -82,7 +87,7 @@ export const signin = async (req: any, res: any) => {
       });
     }
 
-    const studentId = exists.studentid;
+    const studentId = exists.studentId;
     const userRole = "student";
     const token = jwt.sign(
       { studentId, userRole },
@@ -96,4 +101,45 @@ export const signin = async (req: any, res: any) => {
       err: "internal server error",
     });
   }
-}
+};
+
+export const getAllTeachers = async (req: Request, res: Response) => {
+  // check credentials
+
+  try {
+    const result: Array<object> =
+      await prisma.$queryRaw`SELECT t.teacherid, name, email, employeeid, age, gender, address, yearOfJoining, phNo, teacher from teacher t INNER JOIN teacherDetails td ON t.teacherId = td.teacherId;`;
+
+    if (!result.length)
+      return res.status(404).json({
+        err: "No users found!",
+      });
+
+    res.status(200).json(result);
+  } catch (e: any) {
+    return res.status(400).json({
+      err: "Error: " + e.message,
+    });
+  }
+};
+
+export const getSpecificTeacher = async (req: Request, res: Response) => {
+  const { empid } = req.params;
+  // check credentials
+
+  try {
+    const result: Array<object> =
+      await prisma.$queryRaw`SELECT t.teacherid, name, email, employeeid, age, gender, address, yearOfJoining, phNo, teacher from teacher t INNER JOIN teacherDetails td ON t.teacherId = td.teacherId where t.employeeId = ${empid};`;
+
+    if (!result.length)
+      return res.status(404).json({
+        err: "No user found!",
+      });
+
+    return res.status(200).json(result[0]);
+  } catch (e: any) {
+    res.status(400).json({
+      err: "Error: " + e.message,
+    });
+  }
+};

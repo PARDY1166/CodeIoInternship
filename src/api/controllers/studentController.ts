@@ -87,7 +87,7 @@ export const signin = async (req: any, res: any) => {
       });
     }
 
-    const studentId = exists.studentid;
+    const studentId = exists.studentId;
     const userRole = "student";
     const token = jwt.sign(
       { studentId, userRole },

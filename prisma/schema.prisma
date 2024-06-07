@@ -8,82 +8,82 @@ datasource db {
 }
 
 model Branch {
-  branchid          String             @id @default(uuid())
-  branchname        String
-  course_undertaken CourseUndertaken[]
+  branchId          String             @id @default(uuid())
+  branchName        String
+  courseUndertaken CourseUndertaken[]
 
   @@map("branch")
 }
 
 model Course {
-  courseid          String             @id @default(uuid())
-  coursename        String
-  course_undertaken CourseUndertaken[]
+  courseId          String             @id @default(uuid())
+  courseName        String
+  courseUndertaken CourseUndertaken[]
 
   @@map("course")
 }
 
 model CourseUndertaken {
-  courseobjid String       @id @default(uuid())
-  courseid    String
-  teacherid   String
-  branchid    String
+  courseObjId String       @id @default(uuid())
+  courseId    String
+  teacherId   String
+  branchId    String
   year        Int
   semester    semesterenum
   section     String       @db.Char(1)
 
-  branch  Branch  @relation(fields: [branchid], references: [branchid], onDelete: Cascade, onUpdate: Cascade, map: "fk_branchid")
-  course  Course  @relation(fields: [courseid], references: [courseid], onDelete: Cascade, onUpdate: Cascade, map: "fk_courseid")
-  teacher Teacher @relation(fields: [teacherid], references: [teacherid], onDelete: Cascade, onUpdate: Cascade, map: "fk_teacherid")
+  branch  Branch  @relation(fields: [branchId], references: [branchId], onDelete: Cascade, onUpdate: Cascade, map: "fk_branchid")
+  course  Course  @relation(fields: [courseId], references: [courseId], onDelete: Cascade, onUpdate: Cascade, map: "fk_courseid")
+  teacher Teacher @relation(fields: [teacherId], references: [teacherId], onDelete: Cascade, onUpdate: Cascade, map: "fk_teacherid")
 
-  @@map("course_undertaken")
+  @@map("courseUndertaken")
 }
 
 model Student {
-  studentid       String          @id @default(uuid())
+  studentId       String          @id @default(uuid())
   name            String
   email           String          @unique
   usn             String          @unique @db.VarChar(10)
   password        String?
-  student_details StudentDetails?
+  studentDetails StudentDetails?
 
   @@map("student")
 }
 
 model StudentDetails {
-  studentid       String      @id
+  studentId       String      @id
   age             String?
   gender          genderenum?
   address         String?
-  yearofadmission Int?
-  phno            String?     @db.VarChar(10)
-  student         Student     @relation(fields: [studentid], references: [studentid], onDelete: Cascade, onUpdate: Cascade, map: "fk_studentid")
+  yearOfAdmission Int?
+  phNo            String?     @db.VarChar(10)
+  student         Student     @relation(fields: [studentId], references: [studentId], onDelete: Cascade, onUpdate: Cascade, map: "fk_studentid")
 
-  @@map("student_details")
+  @@map("studentDetails")
 }
 
 model Teacher {
-  teacherid         String             @id @default(uuid())
+  teacherId         String             @id @default(uuid())
   name              String
   email             String             @unique
-  employeeid        String             @unique
+  employeeId        String             @unique
   password          String?
-  course_undertaken CourseUndertaken[]
-  teacher_details   TeacherDetails?
+  courseUndertaken CourseUndertaken[]
+  teacherDetails   TeacherDetails?
 
   @@map("teacher")
 }
 
 model TeacherDetails {
-  teacherid     String      @id
+  teacherId     String      @id
   age           String?
   gender        genderenum?
   address       String?
-  yearofjoining Int?
-  phno          String?     @db.VarChar(10)
-  teacher       Teacher     @relation(fields: [teacherid], references: [teacherid], onDelete: Cascade, onUpdate: Cascade, map: "fk_teacherid")
+  yearOfJoining Int
+  phNo          String?     @db.VarChar(10)
+  teacher       Teacher     @relation(fields: [teacherId], references: [teacherId], onDelete: Cascade, onUpdate: Cascade, map: "fk_teacherid")
 
-  @@map("teacher_details")
+  @@map("teacherDetails")
 }
 
 enum genderenum {

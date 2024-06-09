@@ -30,8 +30,8 @@ model Class {
   semester        semesterenum
   section         String       @db.VarChar(1)
   yearOfAdmission Int
-  students        Student[]
 
+  studentIds       String[]
   courseUndertaken CourseUndertaken[]
   classTeacher     ClassTeacher[]
   branch           Branch             @relation(fields: [branchId], references: [branchId], onUpdate: Cascade)
@@ -62,7 +62,7 @@ model Student {
   password  String
 
   studentDetails StudentDetails?
-  class          Class[]
+  classId        String[]
 
   @@map("student")
 }
@@ -110,7 +110,7 @@ model TeacherDetails {
 model ClassTeacher {
   classTeacherId String @id @default(cuid())
   teacherId      String
-  classId        String
+  classId        String @unique
 
   teacher Teacher @relation(fields: [teacherId], references: [teacherId], onDelete: Cascade, onUpdate: Cascade)
   class   Class   @relation(fields: [classId], references: [classId], onDelete: Cascade, onUpdate: Cascade)

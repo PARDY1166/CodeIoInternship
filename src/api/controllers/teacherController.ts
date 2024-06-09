@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../utils/db";
 import jwt from "jsonwebtoken";
-import { signInSchema, signupSchemaTeacher } from "../../zod";
+import { signInSchema, signInSchemaTeacher, signupSchemaTeacher } from "../../zod";
 import bcrypt from "bcrypt";
 
 export const signup = async (req: Request, res: Response) => {
@@ -48,10 +48,10 @@ export const signup = async (req: Request, res: Response) => {
 };
 
 export const signin = async (req: Request, res: Response) => {
-  const { usn, password } = req.body;
+  const { email, password } = req.body;
 
   try {
-    const { success } = signInSchema.safeParse({ usn, password });
+    const { success } = signInSchemaTeacher.safeParse({ email, password });
     if (!success) {
       return res.status(401).json({
         err: "invalid data type",
@@ -64,15 +64,15 @@ export const signin = async (req: Request, res: Response) => {
   }
 
   try {
-    const exists = await prisma.student.findFirst({
+    const exists = await prisma.teacher.findFirst({
       where: {
-        usn,
+        email,
       },
     });
 
     if (!exists) {
       return res.status(404).json({
-        err: "no user exists",
+        err: "no teacher exists",
       });
     }
 
@@ -87,10 +87,10 @@ export const signin = async (req: Request, res: Response) => {
       });
     }
 
-    const studentId = exists.studentId;
-    const userRole = "student";
+    const teacherId = exists.teacherId;
+    const userRole = "teacher";
     const token = jwt.sign(
-      { studentId, userRole },
+      { teacherId, userRole },
       process.env.JWT_SECRET as string
     );
     return res.status(200).json({

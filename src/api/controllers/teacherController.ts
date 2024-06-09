@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../utils/db";
 import jwt from "jsonwebtoken";
-import { signInSchema, signInSchemaTeacher, signupSchemaTeacher } from "../../zod";
+import { signInSchemaTeacher, signupSchemaTeacher } from "../../zod";
 import bcrypt from "bcrypt";
 
 export const signup = async (req: Request, res: Response) => {

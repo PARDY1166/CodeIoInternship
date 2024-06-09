@@ -100,7 +100,7 @@ export const signupSchemaTeacher = z
     }
   });
 
-export const signInSchema = z.object({
+export const signInSchemaStudent = z.object({
   usn: z.string().length(10, "USN has to be of length 10"),
   password: z
     .string()

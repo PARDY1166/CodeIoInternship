@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../utils/db";
 import jwt from "jsonwebtoken";
-import { signInSchema, signupSchemaStudent } from "../../zod";
+import { signInSchemaStudent, signupSchemaStudent } from "../../zod";
 import bcrypt from "bcrypt";
 
 export const signup = async (req: Request, res: Response) => {
@@ -68,7 +68,7 @@ export const signin = async (req: any, res: any) => {
   const { usn, password } = req.body;
 
   try {
-    const { success } = signInSchema.safeParse({ usn, password });
+    const { success } = signInSchemaStudent.safeParse({ usn, password });
     if (!success) {
       return res.status(401).json({
         err: "invalid data type",

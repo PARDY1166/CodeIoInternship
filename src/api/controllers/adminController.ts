@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { signInSchemaTeacher, signupSchemaTeacher } from "../../zod";
+import { dateCheck, signInSchemaTeacher, signupSchemaTeacher } from "../../zod";
 import bcrypt from "bcrypt";
 import prisma from "../../utils/db";
 import jwt from "jsonwebtoken";
@@ -31,7 +31,6 @@ export const signup = async (req: Request, res: Response) => {
     }`;
 
     console.log("date: ", parseDate);
-    
 
     const obj = signupSchemaTeacher.safeParse({
       name,
@@ -63,12 +62,13 @@ export const signup = async (req: Request, res: Response) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const exists = await prisma.admin.findUnique({
-      where: { email }
+      where: { email },
     });
-    if(exists) return res.status(400).json({
-      err: "user already exists!"
-    });
-    
+    if (exists)
+      return res.status(400).json({
+        err: "user already exists!",
+      });
+
     const result = await prisma.admin.create({
       data: {
         name,
@@ -147,14 +147,16 @@ export const signin = async (req: Request, res: Response) => {
 
 export const getAdminInfo = async (req: Request, res: Response) => {
   const { userRole } = req;
-  const { empid } = req.params;
+  const { employeeId } = req.params;
 
-  if (!empid)
+  console.log(req);
+
+  if (!employeeId)
     return res.status(400).json({
       err: "no admin id found!",
     });
 
-  if (!userRole || userRole !== "admin" || req.adminId !== empid) {
+  if (!userRole || userRole !== "admin" || req.adminId !== employeeId) {
     return res.status(403).json({
       err: "Either you are not admin, or not requesting your information!",
     });
@@ -162,7 +164,7 @@ export const getAdminInfo = async (req: Request, res: Response) => {
 
   try {
     const response = await prisma.admin.findUnique({
-      where: { employeeId: empid },
+      where: { employeeId },
     });
 
     return res.status(200).json(response);
@@ -174,32 +176,79 @@ export const getAdminInfo = async (req: Request, res: Response) => {
 };
 
 export const updateInfo = async (req: Request, res: Response) => {
-  const { userRole, adminId } = req;
-  const { empid } = req.params;
+  const { userRole } = req;
+  const { adminId } = req.params;
   const { password, dateOfBirth, gender, address, phNo } = req.body;
 
-  if (!empid)
+  if (!adminId)
     return res.status(400).json({
       err: "no admin id found!",
     });
 
-  if (!userRole || userRole !== "admin" || req.adminId !== empid) {
+  if (!userRole || userRole !== "admin" || req.adminId !== adminId) {
     return res.status(403).json({
       err: "Either you are not admin, or not requesting your information!",
     });
   }
 
+  let dob: Date | undefined = undefined;
   try {
+    if (dateOfBirth) {
+      const l = dateOfBirth.split("-");
+      if (l.length !== 3) {
+        dob = new Date(Date.now());
+      } else {
+        const year = parseInt(l[2], 10);
+        const month = parseInt(l[1], 10) - 1;
+        const date = parseInt(l[0], 10) + 1;
+
+        dob = new Date(year, month, date);
+      }
+    } else dob = undefined;
+
+    if (dob) {
+      const x = dob.toDateString().split(" ");
+      const monthInd =
+        "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(x[1]) / 3 + 1;
+      const parseDate = `${x[3]}-${(monthInd < 10 ? "0" : "") + monthInd}-${
+        x[2]
+      }`;
+
+      const obj = dateCheck.safeParse({
+        date: parseDate
+      });
+
+      if (!obj.success) {
+        return res.status(401).json({
+          err:
+            "zod schema err: " +
+            JSON.stringify(
+              "code: " +
+                obj.error.issues[0].code +
+                "\nmsg: " +
+                obj.error.issues[0].message
+            ),
+        });
+      }
+    }
+
     await prisma.admin.update({
       data: {
-        password: await bcrypt.hash(password, 10),
         address,
-        dateOfBirth,
+        dateOfBirth: dob,
         gender,
         phNo,
       },
       where: { adminId },
     });
+
+    if (password) {
+      await prisma.admin.update({
+        data: { password: await bcrypt.hash(password, 10) },
+        where: { adminId },
+      });
+    }
+
     return res.status(200).json({
       msg: "successfully updated data!",
     });

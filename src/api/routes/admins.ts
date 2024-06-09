@@ -8,5 +8,5 @@ export const api = express();
 api.post("/signin", signin);
 api.post("/signup", signup);
 api.use(authMiddleware);
-api.get("/:empid", getAdminInfo);
-api.put("/:empid", updateInfo);
+api.get("/:adminId", getAdminInfo);
+api.put("/:adminId", updateInfo);

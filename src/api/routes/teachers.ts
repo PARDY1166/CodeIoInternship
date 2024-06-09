@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTeachers, getSpecificTeacher, signin, signup, updateTeacherDetails } from "../controllers/teacherController";
+import { getAllTeachers, getSpecificTeacher, makeClassTeacher, signin, signup, updateTeacherDetails } from "../controllers/teacherController";
 import { authMiddleware } from "../controllers/middleware";
 
 // Endpoint here hits the /api/t/ endpoint
@@ -11,4 +11,5 @@ api.post("/signup", signup);
 api.use(authMiddleware);
 api.get("/", getAllTeachers);
 api.get("/:teacherId", getSpecificTeacher);
-api.put("/:teacherId", updateTeacherDetails)
+api.put("/:teacherId", updateTeacherDetails);
+api.post("/:teacherId/makeClassTeacher", makeClassTeacher)

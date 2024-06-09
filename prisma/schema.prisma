@@ -17,7 +17,7 @@ model Branch {
 }
 
 model Course {
-  courseId         String             @id @default(cuid())
+  courseCode       String             @id
   courseName       String
   courseUndertaken CourseUndertaken[]
 
@@ -33,6 +33,7 @@ model Class {
   students        Student[]
 
   courseUndertaken CourseUndertaken[]
+  classTeacher     ClassTeacher[]
   branch           Branch             @relation(fields: [branchId], references: [branchId], onUpdate: Cascade)
 
   @@unique([branchId, semester, section, yearOfAdmission])
@@ -41,15 +42,15 @@ model Class {
 
 model CourseUndertaken {
   courseObjId String @id @default(cuid())
-  courseId    String
+  courseCode  String
   teacherId   String
   classId     String
 
   class   Class   @relation(fields: [classId], references: [classId], onUpdate: Cascade, map: "fk_classid")
-  course  Course  @relation(fields: [courseId], references: [courseId], onUpdate: Cascade, map: "fk_courseid")
+  course  Course  @relation(fields: [courseCode], references: [courseCode], onUpdate: Cascade, map: "fk_courseid")
   teacher Teacher @relation(fields: [teacherId], references: [teacherId], onUpdate: Cascade, map: "fk_teacherid")
 
-  @@unique([courseId, classId])
+  @@unique([courseCode, classId])
   @@map("courseUndertaken")
 }
 
@@ -88,6 +89,7 @@ model Teacher {
 
   courseUndertaken CourseUndertaken[]
   teacherDetails   TeacherDetails?
+  classTeacher     ClassTeacher[]
 
   @@map("teacher")
 }
@@ -103,6 +105,18 @@ model TeacherDetails {
   teacher Teacher @relation(fields: [teacherId], references: [teacherId], onDelete: Cascade, onUpdate: Cascade, map: "fk_teacherid")
 
   @@map("teacherDetails")
+}
+
+model ClassTeacher {
+  classTeacherId String @id @default(cuid())
+  teacherId      String
+  classId        String
+
+  teacher Teacher @relation(fields: [teacherId], references: [teacherId], onDelete: Cascade, onUpdate: Cascade)
+  class   Class   @relation(fields: [classId], references: [classId], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([teacherId, classId])
+  @@map("classTeacher")
 }
 
 model Admin {

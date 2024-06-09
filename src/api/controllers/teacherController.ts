@@ -255,3 +255,31 @@ export const updateTeacherDetails = async (req: Request, res: Response) => {
     }
   }
 };
+
+export const makeClassTeacher = async (req: Request, res: Response) => {
+  const { userRole } = req;
+  if (userRole !== "admin")
+    return res.status(403).json({
+      err: "not authorized for this action!",
+    });
+
+  const { classId } = req.body;
+  const { teacherId } = req.params;
+  
+  try {
+    await prisma.classTeacher.create({
+      data: {
+        teacherId,
+        classId,
+      },
+    });
+
+    return res.status(200).json({
+      msg: "success!",
+    });
+  } catch (e: any) {
+    return res.status(500).json({
+      err: "error: " + e.message,
+    });
+  }
+};

@@ -178,7 +178,7 @@ export const getAllStudents = async (req: Request, res: Response) => {
       studs = await prisma.student.findMany({
         include: {
           studentDetails: true,
-        },
+        }
       });
       if (!studs.length)
         return res.status(404).json({
@@ -226,6 +226,69 @@ export const getSpecificStudent = async (req: Request, res: Response) => {
       });
       if (!studs)
         return res.status(404).json({
+          err: "student not found!",
+        });
+    }
+
+    return res.status(200).json(studs);
+  } catch (e: any) {
+    return res.status(400).json({
+      err: "error occured: " + e.message,
+    });
+  }
+};
+
+export const getSpecificStudentByUsn = async (req: Request, res: Response) => {
+  const { usn } = req.params;
+  const { userRole } = req;
+
+  try {
+    const exists = await prisma.student.findUnique({
+      where: { usn },
+    });
+
+    if (!exists)
+      return res.status(404).json({
+        err: "student not found!",
+      });
+
+    if (
+      !userRole ||
+      (userRole === "student" && exists?.studentId !== req.studentId)
+    )
+      return res.status(403).json({
+        err: "you are neither admin nor requesting your information",
+      });
+  } catch (e: any) {
+    return res.status(500).json({
+      err: "error: " + e.message,
+    });
+  }
+
+  let studs: object | null;
+  try {
+    if (userRole === "teacher") {
+      studs = await prisma.student.findUnique({
+        select: {
+          name: true,
+          email: true,
+          usn: true,
+        },
+        where: {
+          usn,
+        },
+      });
+    } else {
+      studs = await prisma.student.findUnique({
+        include: {
+          studentDetails: true,
+        },
+        where: {
+          usn,
+        },
+      });
+      if (!studs)
+        return res.status(402).json({
           err: "student not found!",
         });
     }

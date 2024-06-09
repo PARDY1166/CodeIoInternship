@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../../utils/db";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { signInSchemaStudent, signupSchemaStudent } from "../../zod";
 import bcrypt from "bcrypt";
 
@@ -8,7 +8,7 @@ export const signup = async (req: Request, res: Response) => {
   const { name, usn, email, password, confirmPassword, admissionDate } =
     req.body;
 
-  let yoj: Date;
+  let yoj: Date | undefined;
   try {
     const l = admissionDate.split("-");
     if (l.length !== 3) {
@@ -18,17 +18,25 @@ export const signup = async (req: Request, res: Response) => {
       const month = parseInt(l[1], 10) - 1;
       const date = parseInt(l[0], 10) + 1;
 
+      if (year < 1900) throw new Error("");
+
       yoj = new Date(year, month, date);
+      if (yoj > new Date()) throw new Error("");
     }
   } catch (e: any) {
-    yoj = new Date(Date.now());
+    yoj = undefined;
   }
 
-  const x = yoj.toDateString().split(" ");
-  const monthInd = "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(x[1]) / 3 + 1;
-  const parseDate = `${x[3]}-${(monthInd < 10 ? "0" : "") + monthInd}-${x[2]}`;
-
   try {
+    if (!yoj) throw new Error("invalid admission date provided");
+
+    const x = yoj.toDateString().split(" ");
+    const monthInd =
+      "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(x[1]) / 3 + 1;
+    const parseDate = `${x[3]}-${(monthInd < 10 ? "0" : "") + monthInd}-${
+      x[2]
+    }`;
+
     const obj = signupSchemaStudent.safeParse({
       name,
       usn,
@@ -45,12 +53,20 @@ export const signup = async (req: Request, res: Response) => {
     }
   } catch (e: any) {
     return res.status(500).json({
-      err: "internal server error: " + e.message,
+      err: "error: " + e.message,
     });
   }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
+    const exists: Array<object> =
+      await prisma.$queryRaw`SELECT "name" from student WHERE (usn = ${usn}) OR (email = ${email});`;
+
+    if (exists.length)
+      return res.status(400).json({
+        err: "student already exists!",
+      });
+
     const result = await prisma.student.create({
       data: {
         name,
@@ -69,7 +85,7 @@ export const signup = async (req: Request, res: Response) => {
       await prisma.studentDetails.create({
         data: {
           studentId: result.studentId,
-          admissionDate: yoj,
+          admissionDate: yoj as Date,
         },
       });
     } catch (err: any) {
@@ -155,7 +171,11 @@ export const getAllStudents = async (req: Request, res: Response) => {
         await prisma.$queryRaw`SELECT name, email, usn FROM student INNER JOIN studentDetails on student.studentId = studentDetails.studentId;`;
     } else {
       studs =
-        await prisma.$queryRaw`SELECT name, email, usn, age, gender, address, yearOfAdmission, phNo FROM student INNER JOIN studentDetails on student.studentId = studentDetails.studentId;`;
+        await prisma.$queryRaw`SELECT name, email, usn, "dateOfBirth" as "age", gender, address, "admissionDate", "phNo" FROM "student" INNER JOIN "studentDetails" on "student"."studentId" = "studentDetails"."studentId";`;
+      if (!studs.length)
+        return res.status(404).json({
+          err: "no students found!",
+        });
     }
     return res.status(200).json(studs);
   } catch (e: any) {
@@ -174,18 +194,21 @@ export const getSpecificStudent = async (req: Request, res: Response) => {
       err: "you are neither admin nor requesting your information",
     });
 
-  let studs: object;
+  let studs: Array<object>;
   try {
     if (userRole === "teacher") {
       studs =
-        await prisma.$queryRaw`SELECT name, email, usn FROM student INNER JOIN studentDetails on student.studentId = studentDetails.studentId where studentId = ${studentId};`;
+        await prisma.$queryRaw`SELECT name, email, usn FROM student INNER JOIN studentDetails on student.studentId = studentDetails.studentId;`;
     } else {
       studs =
-        await prisma.$queryRaw`SELECT name, email, usn, age, gender, address, yearOfAdmission, phNo FROM student INNER JOIN studentDetails on student.studentId = studentDetails.studentId where studentId = ${studentId};`;
+        await prisma.$queryRaw`SELECT name, email, usn, "dateOfBirth" as "age", gender, address, "admissionDate", "phNo" FROM "student" INNER JOIN "studentDetails" on "student"."studentId" = "studentDetails"."studentId";`;
+      if (!studs.length)
+        return res.status(404).json({
+          err: "no students found!",
+        });
     }
-    console.log("Student is: ", studs);
 
-    return res.status(200).json(studs);
+    return res.status(200).json(studs[0]);
   } catch (e: any) {
     return res.status(400).json({
       err: "error occured: " + e.message,

@@ -74,17 +74,17 @@ model StudentDetails {
   admissionDate DateTime
   phNo          String?     @db.VarChar(10)
 
-  student Student @relation(fields: [studentId], references: [studentId], onUpdate: Cascade, map: "fk_studentid")
+  student Student @relation(fields: [studentId], references: [studentId], onDelete: Cascade, onUpdate: Cascade, map: "fk_studentid")
 
   @@map("studentDetails")
 }
 
 model Teacher {
-  teacherId  String  @id @default(cuid())
+  teacherId  String @id @default(cuid())
   name       String
-  email      String  @unique
-  employeeId String  @unique
-  password   String?
+  email      String @unique
+  employeeId String @unique
+  password   String
 
   courseUndertaken CourseUndertaken[]
   teacherDetails   TeacherDetails?
@@ -97,7 +97,7 @@ model TeacherDetails {
   dateOfBirth DateTime?
   gender      genderenum?
   address     String?
-  joiningDate DateTime
+  joiningDate DateTime    @default(now())
   phNo        String?     @db.VarChar(10)
 
   teacher Teacher @relation(fields: [teacherId], references: [teacherId], onDelete: Cascade, onUpdate: Cascade, map: "fk_teacherid")

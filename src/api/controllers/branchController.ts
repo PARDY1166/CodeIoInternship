@@ -11,6 +11,15 @@ export const addNewBranch = async (req: Request, res: Response) => {
   const { branchName, branchCode } = req.body;
 
   try {
+    const exists: Array<object> =
+      await prisma.$queryRaw`SELECT "branchId" FROM branch WHERE ("branchName" = ${branchName}) OR ("branchCode" = ${branchCode})`;
+    console.log("Exists!: ", exists);
+
+    if (exists.length)
+      return res.status(400).json({
+        err: "branch already exists!",
+      });
+
     await prisma.branch.create({
       data: { branchName, branchCode },
     });

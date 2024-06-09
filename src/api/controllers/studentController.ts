@@ -93,10 +93,7 @@ export const signin = async (req: any, res: any) => {
       });
     }
 
-    const result = await bcrypt.compare(
-      exists.password as string,
-      await bcrypt.hash(password, 10)
-    );
+    const result = await bcrypt.compare(password, exists.password);
 
     if (!result) {
       return res.status(403).json({
@@ -125,7 +122,7 @@ export const getAllStudents = async (req: Request, res: Response) => {
   // If user is admin, return the address and phNo also, otherwise dont send the address and phNo
   try {
     const studs =
-      await prisma.$queryRaw`SELECT name, email, usn, age, gender, address, yearofadmission, phNo FROM student INNER JOIN student_details on student.studentid = student_details.studentid;`;
+      await prisma.$queryRaw`SELECT name, email, usn, age, gender, address, yearofadmission, phNo FROM student INNER JOIN student_details on student.studentid = student_details.studentid WHERE;`;
 
     return res.status(200).json(studs);
   } catch (e: any) {

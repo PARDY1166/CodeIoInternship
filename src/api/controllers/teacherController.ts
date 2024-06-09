@@ -39,7 +39,6 @@ export const signup = async (req: Request, res: Response) => {
         err: "couldnt add to the database",
       });
     }
-    console.log(result);
   } catch (err: any) {
     return res.status(500).json({
       err: "internal server error" + err.message,

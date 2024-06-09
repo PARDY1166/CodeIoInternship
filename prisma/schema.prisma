@@ -39,12 +39,14 @@ model CourseUndertaken {
   @@map("courseUndertaken")
 }
 
+
+
 model Student {
   studentId       String          @id @default(uuid())
   name            String
   email           String          @unique
   usn             String          @unique @db.VarChar(10)
-  password        String?
+  password        String
   studentDetails StudentDetails?
 
   @@map("student")

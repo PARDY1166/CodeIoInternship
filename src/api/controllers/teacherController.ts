@@ -112,10 +112,7 @@ export const signin = async (req: Request, res: Response) => {
       });
     }
 
-    const result = await bcrypt.compare(
-      exists.password as string,
-      await bcrypt.hash(password, 10)
-    );
+    const result = await bcrypt.compare(password, exists.password as string);
 
     if (!result) {
       return res.status(403).json({
@@ -140,11 +137,20 @@ export const signin = async (req: Request, res: Response) => {
 };
 
 export const getAllTeachers = async (req: Request, res: Response) => {
-  // check credentials
+  const { userRole } = req;
+  if (!userRole || userRole !== "admin")
+    return res.status(400).json({
+      err: "only admin access!",
+    });
 
   try {
-    const result: Array<object> =
-      await prisma.$queryRaw`SELECT t.teacherid, name, email, employeeid, age, gender, address, yearOfJoining, phNo, teacher from teacher t INNER JOIN teacherDetails td ON t.teacherId = td.teacherId;`;
+    const result: Array<object> = await prisma.teacher.findMany({
+      include: {
+        teacherDetails: true,
+      },
+    });
+
+    console.log(result);
 
     if (!result.length)
       return res.status(404).json({
@@ -160,12 +166,19 @@ export const getAllTeachers = async (req: Request, res: Response) => {
 };
 
 export const getSpecificTeacher = async (req: Request, res: Response) => {
+  const { userRole } = req;
   const { teacherId } = req.params;
-  // check credentials
+  if (userRole !== "admin" && teacherId != req.teacherId)
+    return res.status(403).json({
+      err: "neither are you admin, nor requesting for your own info",
+    });
 
   try {
-    const result: Array<object> =
-      await prisma.$queryRaw`SELECT t.teacherid, name, email, employeeid, age, gender, address, yearOfJoining, phNo, teacher from teacher t INNER JOIN teacherDetails td ON t.teacherId = td.teacherId where t.employeeId = ${teacherId};`;
+    const result: Array<object> = await prisma.teacher.findMany({
+      include: {
+        teacherDetails: true,
+      },
+    });
 
     if (!result.length)
       return res.status(404).json({
@@ -184,6 +197,12 @@ export const updateTeacherDetails = async (req: Request, res: Response) => {
   const { teacherId } = req.params;
   const { password, dateOfBirth, gender, address, joiningDate, phNo } =
     req.body;
+
+  const { userRole } = req;
+  if (userRole !== "admin" && teacherId !== req.teacherId)
+    return res.status(403).json({
+      err: "neither are you the admin, nor are you requesting for your own information!",
+    });
 
   if (password) {
     try {
@@ -225,7 +244,7 @@ export const updateTeacherDetails = async (req: Request, res: Response) => {
           address,
           phNo,
           dateOfBirth: dob,
-          joiningDate: yoj
+          joiningDate: yoj,
         },
         where: { teacherId },
       });

@@ -167,11 +167,19 @@ export const getAllStudents = async (req: Request, res: Response) => {
   let studs: Array<object>;
   try {
     if (userRole === "teacher") {
-      studs =
-        await prisma.$queryRaw`SELECT name, email, usn FROM student INNER JOIN studentDetails on student.studentId = studentDetails.studentId;`;
+      studs = await prisma.student.findMany({
+        select: {
+          name: true,
+          email: true,
+          usn: true,
+        },
+      });
     } else {
-      studs =
-        await prisma.$queryRaw`SELECT name, email, usn, "dateOfBirth" as "age", gender, address, "admissionDate", "phNo" FROM "student" INNER JOIN "studentDetails" on "student"."studentId" = "studentDetails"."studentId";`;
+      studs = await prisma.student.findMany({
+        include: {
+          studentDetails: true,
+        },
+      });
       if (!studs.length)
         return res.status(404).json({
           err: "no students found!",
@@ -194,21 +202,35 @@ export const getSpecificStudent = async (req: Request, res: Response) => {
       err: "you are neither admin nor requesting your information",
     });
 
-  let studs: Array<object>;
+  let studs: object | null;
   try {
     if (userRole === "teacher") {
-      studs =
-        await prisma.$queryRaw`SELECT name, email, usn FROM student INNER JOIN studentDetails on student.studentId = studentDetails.studentId;`;
+      studs = await prisma.student.findUnique({
+        select: {
+          name: true,
+          email: true,
+          usn: true,
+        },
+        where: {
+          studentId,
+        },
+      });
     } else {
-      studs =
-        await prisma.$queryRaw`SELECT name, email, usn, "dateOfBirth" as "age", gender, address, "admissionDate", "phNo" FROM "student" INNER JOIN "studentDetails" on "student"."studentId" = "studentDetails"."studentId";`;
-      if (!studs.length)
+      studs = await prisma.student.findUnique({
+        include: {
+          studentDetails: true,
+        },
+        where: {
+          studentId,
+        },
+      });
+      if (!studs)
         return res.status(404).json({
-          err: "no students found!",
+          err: "student not found!",
         });
     }
 
-    return res.status(200).json(studs[0]);
+    return res.status(200).json(studs);
   } catch (e: any) {
     return res.status(400).json({
       err: "error occured: " + e.message,

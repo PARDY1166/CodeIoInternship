@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../../utils/db";
 import jwt from "jsonwebtoken";
-import { signInSchemaStudent, signupSchemaStudent } from "../../zod";
+import { dateCheck, signInSchemaStudent, signupSchemaStudent } from "../../zod";
 import bcrypt from "bcrypt";
 
 export const signup = async (req: Request, res: Response) => {
@@ -232,10 +232,12 @@ export const updateStudentDetails = async (req: Request, res: Response) => {
     } catch (e: any) {
       console.log("error updatinng password!");
     }
+  }
 
-    try {
+  try {
+    let dob: Date | undefined = undefined;
+    if (dateOfBirth) {
       const l = dateOfBirth.split("-");
-      let dob: Date | undefined;
       if (l.length === 3) {
         const year = parseInt(l[2], 10);
         const month = parseInt(l[1], 10) - 1;
@@ -244,19 +246,38 @@ export const updateStudentDetails = async (req: Request, res: Response) => {
         dob = new Date(year, month, date);
       } else dob = undefined;
 
-      await prisma.studentDetails.update({
-        data: {
-          gender,
-          address,
-          phNo,
-          dateOfBirth: dob,
-        },
-        where: { studentId },
-      });
-    } catch (e: any) {
-      return res.status(400).json({
-        err: "error updating profile!",
-      });
+      if (dob) {
+        const x = dob.toDateString().split(" ");
+        const monthInd =
+          "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(x[1]) / 3 + 1;
+        const parseDate = `${x[3]}-${(monthInd < 10 ? "0" : "") + monthInd}-${
+          x[2]
+        }`;
+        if (
+          !dateCheck.safeParse({
+            date: parseDate,
+          }).success
+        )
+          throw new Error("invalid date of birth provided!");
+      }
     }
+
+    await prisma.studentDetails.update({
+      data: {
+        gender,
+        address,
+        phNo,
+        dateOfBirth: dob,
+      },
+      where: { studentId },
+    });
+
+    return res.status(200).json({
+      msg: "success!",
+    });
+  } catch (e: any) {
+    return res.status(400).json({
+      err: "error updating profile! " + e.message,
+    });
   }
 };

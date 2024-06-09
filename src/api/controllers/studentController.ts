@@ -5,17 +5,19 @@ import { signInSchema, signupSchemaStudent } from "../../zod";
 import bcrypt from "bcrypt";
 
 export const signup = async (req: Request, res: Response) => {
-  const { name, usn, email, password } = req.body;
+  const { name, usn, email, password, confirmPassword } = req.body;
   try {
-    const { success } = signupSchemaStudent.safeParse({
+    const obj = signupSchemaStudent.safeParse({
       name,
       usn,
       password,
       email,
+      confirmPassword,
     });
-    if (!success) {
+
+    if (!obj.success) {
       return res.status(401).json({
-        err: "invalid data type",
+        err: JSON.stringify(obj.error.issues[0].message),
       });
     }
   } catch (err) {
@@ -39,7 +41,22 @@ export const signup = async (req: Request, res: Response) => {
         err: "couldnt add to the database",
       });
     }
-    console.log(result);
+
+    try {
+      await prisma.studentDetails.create({
+        data: {
+          studentId: result.studentId,
+        },
+      });
+    } catch (err: any) {
+      await prisma.student.delete({
+        where: { studentId: result.studentId },
+      });
+
+      return res.status(400).json({ err: "error adding data!" });
+    }
+
+    return res.status(200).json({ msg: "Success!" });
   } catch (err: any) {
     return res.status(500).json({
       err: "internal server error" + err.message,

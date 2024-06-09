@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import prisma from "../../utils/db";
 import { authMiddleware } from "../controllers/middleware";
 
-// Any endpoint here hits the /student/ endpoint
+// Any endpoint here hits the /students/ endpoint
 
 
 export const api = express();

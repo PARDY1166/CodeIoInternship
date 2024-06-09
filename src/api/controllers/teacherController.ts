@@ -7,15 +7,15 @@ import bcrypt from "bcrypt";
 export const signup = async (req: Request, res: Response) => {
   const { name, employeeId, email, password } = req.body;
   try {
-    const { success } = signupSchemaTeacher.safeParse({
+    const obj = signupSchemaTeacher.safeParse({
       name,
       employeeId,
       password,
       email,
     });
-    if (!success) {
+    if (!obj.success) {
       return res.status(401).json({
-        err: "invalid data type",
+        err: obj.error.issues[0].message,
       });
     }
   } catch (err) {

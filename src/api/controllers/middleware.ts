@@ -6,6 +6,16 @@ dotenv.config();
 interface CustomJwtPayload extends JwtPayload {
   studentId?: string;
   teacherId?: string;
+  adminId?: string;
+}
+
+declare module "express-serve-static-core" {
+  interface Request {
+    userRole?: string;
+    studentId?: string;
+    teacherId?: string;
+    adminId?: string;
+  }
 }
 
 export async function authMiddleware(
@@ -21,7 +31,16 @@ export async function authMiddleware(
       jwtToken,
       process.env.JWT_SECRET as string
     ) as CustomJwtPayload;
-    if (response.studentId || response.teacherId) {
+    req.userRole = response.userRole;
+    if(response.studentId) req.studentId = response.studentId;
+    if(response.teacherId) req.teacherId = response.teacherId;
+    if(response.adminId) req.adminId = response.adminId;
+
+    if (
+      (response.studentId && response.userRole === "student") ||
+      (response.teacherId && response.userRole === "teacher") || 
+      (response.adminId && response.userRole === "admin")
+    ) {
       next();
     } else {
       return res.json({

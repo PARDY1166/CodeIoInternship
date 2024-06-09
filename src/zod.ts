@@ -13,6 +13,7 @@ export const signupSchemaStudent = z
       .min(8, "Password must be at least 8 characters")
       .max(32, "Password must be less than 32 characters"),
     confirmPassword: z.string(),
+    admissionDate: z.string().date()
   })
   .superRefine(({ confirmPassword, password }, context) => {
     if (confirmPassword !== password) {
@@ -56,13 +57,14 @@ export const signupSchemaTeacher = z
       .string()
       .min(2, "Minimum length of 2 needed")
       .max(30, "Maximum length can be 30"),
-    employeeid: z.string().length(10, "Employee ID has to be of length 10"),
+    employeeId: z.string().length(10, "Employee ID has to be of length 10"),
     email: z.string().email(),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
       .max(32, "Password must be less than 32 characters"),
     confirmPassword: z.string(),
+    joiningDate: z.string().date()
   })
   .superRefine(({ confirmPassword, password }, context) => {
     if (confirmPassword !== password) {
@@ -107,7 +109,6 @@ export const signInSchemaStudent = z.object({
     .min(8, "Password must be at least 8 characters")
     .max(32, "Password must be less than 32 characters"),
 });
-
 
 export const signInSchemaTeacher = z.object({
   email: z.string().email(),

@@ -14,3 +14,4 @@ exports.api.post("/signup", adminController_1.signup);
 exports.api.use(middleware_1.authMiddleware);
 exports.api.get("/:employeeId", adminController_1.getAdminInfo);
 exports.api.put("/:adminId", adminController_1.updateInfo);
+exports.api.post("/upload", adminController_1.upload.single('file'), adminController_1.uploadTeacherDetails);

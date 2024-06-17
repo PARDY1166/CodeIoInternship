@@ -164,7 +164,7 @@ export const getAdminInfo = async (req: Request, res: Response) => {
 
   try {
     const response = await prisma.admin.findUnique({
-      where: { employeeId },
+      where: { adminId:employeeId },
     });
 
     return res.status(200).json(response);

@@ -1,8 +1,23 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { dateCheck, signInSchemaTeacher, signupSchemaTeacher } from "../../zod";
 import bcrypt from "bcrypt";
 import prisma from "../../utils/db";
 import jwt from "jsonwebtoken";
+import multer from "multer";
+import * as xlsx from "xlsx";
+import * as path from "path";
+import * as fs from "fs";
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads");
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now() + file.originalname}`);
+  },
+});
+
+export const upload = multer({ storage });
 
 export const signup = async (req: Request, res: Response) => {
   const { name, employeeId, email, password, confirmPassword, joiningDate } =
@@ -164,7 +179,7 @@ export const getAdminInfo = async (req: Request, res: Response) => {
 
   try {
     const response = await prisma.admin.findUnique({
-      where: { employeeId },
+      where: { adminId: employeeId },
     });
 
     return res.status(200).json(response);
@@ -215,7 +230,7 @@ export const updateInfo = async (req: Request, res: Response) => {
       }`;
 
       const obj = dateCheck.safeParse({
-        date: parseDate
+        date: parseDate,
       });
 
       if (!obj.success) {
@@ -257,4 +272,58 @@ export const updateInfo = async (req: Request, res: Response) => {
       err: e.message,
     });
   }
+};
+
+export const uploadTeacherDetails = async (req: Request, res: Response) => {
+  interface Teacher {
+    name: string;
+    email: string;
+    employeeId: string;
+    password: string;
+    courseUnderataken: string;
+  }
+  const directoryPath = path.join(__dirname, "../../../uploads");
+  const files = fs.readdirSync(directoryPath);
+  const excelfile = files[0];
+  const excelFilePath = path.join(directoryPath, excelfile);
+  const workbook = xlsx.readFile(excelFilePath);
+  const worksheet = xlsx.utils.sheet_to_json(
+    workbook.Sheets[workbook.SheetNames[0]]
+  ) as Teacher[];
+
+  try {
+    for (let details of worksheet) {
+      const resp = await prisma.teacher.findFirst({
+        where: {
+          email: details.email,
+        },
+      });
+      if (!resp) {
+        const response = await prisma.teacher.create({
+          data: {
+            name: details.name,
+            email: details.email,
+            password: details.password,
+            employeeId: details.employeeId,
+          },
+        });
+      }
+    }
+  } catch (err) {
+    return res.status(400).json({
+      err: "error while uploading " + err,
+    });
+  }
+
+  for (const file of files) {
+    fs.unlink(path.join(directoryPath, file), (err) => {
+      if (err) {
+        console.log("error while deleting");
+      }else{
+        console.log("deleted succesfully")
+      }
+    });
+  }
+
+  return res.json({ msg: worksheet });
 };

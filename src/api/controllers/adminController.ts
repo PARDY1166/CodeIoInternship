@@ -281,6 +281,7 @@ export const uploadTeacherDetails = async (req: Request, res: Response) => {
     employeeId: string;
     password: string;
     courseUnderataken: string;
+    joiningDate: Date;
   }
   const directoryPath = path.join(__dirname, "../../../uploads");
   const files = fs.readdirSync(directoryPath);
@@ -305,6 +306,7 @@ export const uploadTeacherDetails = async (req: Request, res: Response) => {
             email: details.email,
             password: details.password,
             employeeId: details.employeeId,
+            joiningDate: details.joiningDate
           },
         });
       }

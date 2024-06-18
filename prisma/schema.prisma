@@ -25,21 +25,25 @@ model Course {
 }
 
 model AdminAddedStudentEmail {
-  emailId String  @id @default(cuid())
-  userId  String? @unique
-  emails  String  @unique
-  usn     String  @unique
+  adminEmailId String  @id @default(cuid())
+  userId       String? @unique
+  email        String  @unique
+  usn          String  @unique
 
   user Student? @relation(fields: [userId], references: [studentId])
+
+  @@map("adminAddedStudentEmail")
 }
 
 model AdminAddedTeacherEmail {
-  emailId    String  @id @default(cuid())
-  userId     String? @unique
-  emails     String  @unique
-  employeeId String  @unique
+  adminEmailId String  @id @default(cuid())
+  userId       String? @unique
+  email        String  @unique
+  employeeId   String  @unique
 
   user Teacher? @relation(fields: [userId], references: [teacherId])
+
+  @@map("adminAddedTeacherEmail")
 }
 
 model Class {

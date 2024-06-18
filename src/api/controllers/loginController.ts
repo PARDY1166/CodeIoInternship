@@ -6,6 +6,8 @@ import jwt from "jsonwebtoken";
 export const login = async (req: Request, res: Response) => {
   const { email, usn, password } = req.body;
 
+  if(usn !== "" && email !== "") return res.status(400).json({error: "use only email or usn, not both"})
+
   if (usn) {
 	console.log("HEHE");
 	
@@ -20,7 +22,7 @@ export const login = async (req: Request, res: Response) => {
 
       if (!result) {
         return res.status(400).json({
-          err: "invalid credentials!",
+          err: "no such user exists!",
         });
       }
 

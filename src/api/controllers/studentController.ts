@@ -1,11 +1,14 @@
 import { Request, Response } from "express";
 import prisma from "../../utils/db";
-import { dateCheck, signupSchemaStudent } from "../../zod";
+import { dateCheck } from "../../zod";
 import bcrypt from "bcrypt";
 
 export const signup = async (req: Request, res: Response) => {
   const { name, email, password, admissionDate } = req.body;
-
+  console.log("HEREEEEE");
+  
+  console.log(name, email, password, admissionDate);
+  
   let yoj: Date | undefined;
   try {
     const l = admissionDate.split("-");
@@ -16,10 +19,10 @@ export const signup = async (req: Request, res: Response) => {
       const month = parseInt(l[1], 10) - 1;
       const date = parseInt(l[0], 10) + 1;
 
-      if (year < 1900) throw new Error("");
+      if (year < 1900) throw new Error("Invalid date 1");
 
       yoj = new Date(year, month, date);
-      if (yoj > new Date()) throw new Error("");
+      if (yoj > new Date()) throw new Error("Invalid date 2");
     }
   } catch (e: any) {
     yoj = undefined;
@@ -36,7 +39,7 @@ export const signup = async (req: Request, res: Response) => {
   let allowed;
   try {
     allowed = await prisma.adminAddedStudentEmail.findUnique({
-      where: { emailId: email },
+      where: { email },
     });
     if (!allowed) return res.status(403).json({ error: "email unauthorized!" });
   } catch (e: any) {
@@ -78,6 +81,15 @@ export const signup = async (req: Request, res: Response) => {
           admissionDate: yoj as Date,
         },
       });
+
+      await prisma.adminAddedStudentEmail.update({
+        where: {
+          email
+        },
+        data: {
+          userId: result.studentId
+        }
+      })
     } catch (err: any) {
       await prisma.student.delete({
         where: { studentId: result.studentId },
@@ -85,7 +97,8 @@ export const signup = async (req: Request, res: Response) => {
 
       return res.status(400).json({ err: "error adding data!" });
     }
-
+    console.log("DONE");
+    
     return res.status(200).json({ msg: "Success!" });
   } catch (err: any) {
     return res.status(500).json({
@@ -93,60 +106,6 @@ export const signup = async (req: Request, res: Response) => {
     });
   }
 };
-
-// export const signin = async (req: any, res: any) => {
-//   const { usn, password } = req.body;
-
-//   try {
-//     const { success } = signInSchemaStudent.safeParse({ usn, password });
-//     if (!success) {
-//       return res.status(401).json({
-//         err: "invalid data type",
-//       });
-//     }
-//   } catch (err) {
-//     return res.status(500).json({
-//       err: "internal server error",
-//     });
-//   }
-
-//   try {
-//     const exists = await prisma.student.findFirst({
-//       where: {
-//         usn,
-//       },
-//     });
-
-//     if (!exists) {
-//       return res.status(404).json({
-//         err: "no user exists",
-//       });
-//     }
-
-//     const result = await bcrypt.compare(password, exists.password);
-
-//     if (!result) {
-//       return res.status(403).json({
-//         err: "invalid credentials",
-//       });
-//     }
-
-//     const studentId = exists.studentId;
-//     const userRole = "student";
-//     const token = jwt.sign(
-//       { studentId, userRole },
-//       process.env.JWT_SECRET as string,
-//       { expiresIn: "1h" }
-//     );
-//     return res.status(200).json({
-//       message: `Bearer ${token}`,
-//     });
-//   } catch (err) {
-//     return res.json({
-//       err: "internal server error",
-//     });
-//   }
-// };
 
 export const getAllStudents = async (req: Request, res: Response) => {
   const { userRole } = req;

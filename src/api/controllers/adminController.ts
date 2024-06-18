@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
-import { dateCheck, signInSchemaTeacher, signupSchemaTeacher } from "../../zod";
+import { Request, Response } from "express";
+import { dateCheck } from "../../zod";
 import bcrypt from "bcrypt";
 import prisma from "../../utils/db";
 import jwt from "jsonwebtoken";
@@ -20,6 +20,8 @@ const storage = multer.diskStorage({
 export const upload = multer({ storage });
 
 export const signup = async (req: Request, res: Response) => {
+  console.log("HI");
+  
   const { name, employeeId, email, password, confirmPassword, joiningDate } =
     req.body;
 
@@ -37,37 +39,6 @@ export const signup = async (req: Request, res: Response) => {
         yoj = new Date(year, month, date);
       }
     } else yoj = new Date(Date.now());
-
-    const x = yoj.toDateString().split(" ");
-    const monthInd =
-      "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(x[1]) / 3 + 1;
-    const parseDate = `${x[3]}-${(monthInd < 10 ? "0" : "") + monthInd}-${
-      x[2]
-    }`;
-
-    console.log("date: ", parseDate);
-
-    const obj = signupSchemaTeacher.safeParse({
-      name,
-      employeeId,
-      password,
-      email,
-      confirmPassword,
-      joiningDate: parseDate,
-    });
-
-    if (!obj.success) {
-      return res.status(401).json({
-        err:
-          "zod schema err: " +
-          JSON.stringify(
-            "code: " +
-              obj.error.issues[0].code +
-              "\nmsg: " +
-              obj.error.issues[0].message
-          ),
-      });
-    }
   } catch (e: any) {
     return res.status(500).json({
       err: "internal server error: " + e.message,
@@ -108,19 +79,6 @@ export const signup = async (req: Request, res: Response) => {
 
 export const signin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-
-  try {
-    const { success } = signInSchemaTeacher.safeParse({ email, password });
-    if (!success) {
-      return res.status(401).json({
-        err: "invalid data type",
-      });
-    }
-  } catch (err) {
-    return res.status(500).json({
-      err: "internal server error",
-    });
-  }
 
   try {
     const exists = await prisma.admin.findUnique({

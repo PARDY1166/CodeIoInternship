@@ -1,9 +1,11 @@
 import express from "express";
 import { api as indexRouter } from "./api/routes/index";
 import dotenv from "dotenv";
+import cors from "cors";
 dotenv.config();
 
 const api = express();
+api.use(cors);
 api.use(express.json());
 api.use(indexRouter);
 

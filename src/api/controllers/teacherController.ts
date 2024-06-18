@@ -35,7 +35,7 @@ export const signup = async (req: Request, res: Response) => {
   let allowed;
   try {
     allowed = await prisma.adminAddedTeacherEmail.findUnique({
-      where: { emailId: email },
+      where: { email },
     });
     if (!allowed) return res.status(403).json({ error: "email unauthorized!" });
   } catch (e: any) {
@@ -76,59 +76,6 @@ export const signup = async (req: Request, res: Response) => {
     });
   }
 };
-
-// export const signin = async (req: Request, res: Response) => {
-//   const { email, password } = req.body;
-
-//   try {
-//     const { success } = signInSchemaTeacher.safeParse({ email, password });
-//     if (!success) {
-//       return res.status(401).json({
-//         err: "invalid data type",
-//       });
-//     }
-//   } catch (err) {
-//     return res.status(500).json({
-//       err: "internal server error",
-//     });
-//   }
-
-//   try {
-//     const exists = await prisma.teacher.findFirst({
-//       where: {
-//         email,
-//       },
-//     });
-
-//     if (!exists) {
-//       return res.status(404).json({
-//         err: "no teacher exists",
-//       });
-//     }
-
-//     const result = await bcrypt.compare(password, exists.password as string);
-
-//     if (!result) {
-//       return res.status(403).json({
-//         err: "invalid credentials",
-//       });
-//     }
-
-//     const teacherId = exists.teacherId;
-//     const userRole = "teacher";
-//     const token = jwt.sign(
-//       { teacherId, userRole },
-//       process.env.JWT_SECRET as string
-//     );
-//     return res.status(200).json({
-//       message: `bearer ${token}`,
-//     });
-//   } catch (err) {
-//     return res.json({
-//       err: "internal server error",
-//     });
-//   }
-// };
 
 export const getAllTeachers = async (req: Request, res: Response) => {
   const { userRole } = req;

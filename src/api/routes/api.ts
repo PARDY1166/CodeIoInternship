@@ -7,6 +7,7 @@ import { api as classApi } from "./classes";
 import {api as courseApi} from "./courses";
 import {api as loginApi} from "./login";
 
+// At endpoint /api
 
 export const apis = express();
 

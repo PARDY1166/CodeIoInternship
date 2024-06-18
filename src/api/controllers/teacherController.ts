@@ -1,12 +1,9 @@
 import { Request, Response } from "express";
 import prisma from "../../utils/db";
-import jwt from "jsonwebtoken";
-import { signInSchemaTeacher, signupSchemaTeacher } from "../../zod";
 import bcrypt from "bcrypt";
 
 export const signup = async (req: Request, res: Response) => {
-  const { name, employeeId, email, password, confirmPassword, joiningDate } =
-    req.body;
+  const { name, email, password, joiningDate } = req.body;
   let yoj: Date;
   try {
     if (joiningDate) {
@@ -22,34 +19,11 @@ export const signup = async (req: Request, res: Response) => {
       }
     } else yoj = new Date(Date.now());
 
-    const x = yoj.toDateString().split(" ");
-    const monthInd =
-      "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(x[1]) / 3 + 1;
-    const parseDate = `${x[3]}-${(monthInd < 10 ? "0" : "") + monthInd}-${
-      x[2]
-    }`;
-
-    console.log("date: ", parseDate);
-
-    const obj = signupSchemaTeacher.safeParse({
-      name,
-      employeeId,
-      password,
-      email,
-      confirmPassword,
-      joiningDate: parseDate,
-    });
-
-    if (!obj.success) {
-      return res.status(401).json({
-        err:
-          "zod schema err: " +
-          JSON.stringify(
-            "code: " +
-              obj.error.issues[0].code +
-              "\nmsg: " +
-              obj.error.issues[0].message
-          ),
+    try {
+      if (!yoj) throw new Error("invalid admission date provided");
+    } catch (e: any) {
+      return res.status(500).json({
+        err: "error: " + e.message,
       });
     }
   } catch (e: any) {
@@ -58,14 +32,34 @@ export const signup = async (req: Request, res: Response) => {
     });
   }
 
+  let allowed;
   try {
+    allowed = await prisma.adminAddedTeacherEmail.findUnique({
+      where: { emailId: email },
+    });
+    if (!allowed) return res.status(403).json({ error: "email unauthorized!" });
+  } catch (e: any) {
+    return res.status(500).json({ error: "error: " + e.message });
+  }
+
+  try {
+    const exists = await prisma.teacher.findFirst({
+      where: {
+        OR: [{ email }, { employeeId: allowed.employeeId }],
+      },
+    });
+
+    if (exists)
+      return res.status(400).json({ error: "user already registered!" });
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await prisma.teacher.create({
       data: {
         name,
-        employeeId,
+        employeeId: allowed.employeeId,
         email,
         password: hashedPassword,
+        joiningDate: yoj,
       },
     });
 
@@ -83,58 +77,58 @@ export const signup = async (req: Request, res: Response) => {
   }
 };
 
-export const signin = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+// export const signin = async (req: Request, res: Response) => {
+//   const { email, password } = req.body;
 
-  try {
-    const { success } = signInSchemaTeacher.safeParse({ email, password });
-    if (!success) {
-      return res.status(401).json({
-        err: "invalid data type",
-      });
-    }
-  } catch (err) {
-    return res.status(500).json({
-      err: "internal server error",
-    });
-  }
+//   try {
+//     const { success } = signInSchemaTeacher.safeParse({ email, password });
+//     if (!success) {
+//       return res.status(401).json({
+//         err: "invalid data type",
+//       });
+//     }
+//   } catch (err) {
+//     return res.status(500).json({
+//       err: "internal server error",
+//     });
+//   }
 
-  try {
-    const exists = await prisma.teacher.findFirst({
-      where: {
-        email,
-      },
-    });
+//   try {
+//     const exists = await prisma.teacher.findFirst({
+//       where: {
+//         email,
+//       },
+//     });
 
-    if (!exists) {
-      return res.status(404).json({
-        err: "no teacher exists",
-      });
-    }
+//     if (!exists) {
+//       return res.status(404).json({
+//         err: "no teacher exists",
+//       });
+//     }
 
-    const result = await bcrypt.compare(password, exists.password as string);
+//     const result = await bcrypt.compare(password, exists.password as string);
 
-    if (!result) {
-      return res.status(403).json({
-        err: "invalid credentials",
-      });
-    }
+//     if (!result) {
+//       return res.status(403).json({
+//         err: "invalid credentials",
+//       });
+//     }
 
-    const teacherId = exists.teacherId;
-    const userRole = "teacher";
-    const token = jwt.sign(
-      { teacherId, userRole },
-      process.env.JWT_SECRET as string
-    );
-    return res.status(200).json({
-      message: `bearer ${token}`,
-    });
-  } catch (err) {
-    return res.json({
-      err: "internal server error",
-    });
-  }
-};
+//     const teacherId = exists.teacherId;
+//     const userRole = "teacher";
+//     const token = jwt.sign(
+//       { teacherId, userRole },
+//       process.env.JWT_SECRET as string
+//     );
+//     return res.status(200).json({
+//       message: `bearer ${token}`,
+//     });
+//   } catch (err) {
+//     return res.json({
+//       err: "internal server error",
+//     });
+//   }
+// };
 
 export const getAllTeachers = async (req: Request, res: Response) => {
   const { userRole } = req;
@@ -265,7 +259,7 @@ export const makeClassTeacher = async (req: Request, res: Response) => {
 
   const { classId } = req.body;
   const { teacherId } = req.params;
-  
+
   try {
     await prisma.classTeacher.create({
       data: {

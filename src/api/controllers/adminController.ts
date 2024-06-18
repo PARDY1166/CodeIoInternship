@@ -133,7 +133,7 @@ export const signin = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { adminId, userRole },
       process.env.JWT_SECRET as string,
-      { expiresIn: "1h" }
+      { expiresIn: "12h" }
     );
     return res.status(200).json({
       message: `Bearer ${token}`,

@@ -24,6 +24,24 @@ model Course {
   @@map("course")
 }
 
+model AdminAddedStudentEmail {
+  emailId String  @id @default(cuid())
+  userId  String? @unique
+  emails  String  @unique
+  usn     String  @unique
+
+  user Student? @relation(fields: [userId], references: [studentId])
+}
+
+model AdminAddedTeacherEmail {
+  emailId    String  @id @default(cuid())
+  userId     String? @unique
+  emails     String  @unique
+  employeeId String  @unique
+
+  user Teacher? @relation(fields: [userId], references: [teacherId])
+}
+
 model Class {
   classId         String       @id @default(cuid())
   branchId        String
@@ -46,23 +64,27 @@ model CourseUndertaken {
   teacherId   String
   classId     String
 
-  class   Class   @relation(fields: [classId], references: [classId], onUpdate: Cascade, map: "fk_classid")
-  course  Course  @relation(fields: [courseCode], references: [courseCode], onUpdate: Cascade, map: "fk_courseid")
-  teacher Teacher @relation(fields: [teacherId], references: [teacherId], onUpdate: Cascade, map: "fk_teacherid")
+  attendance Attendance[]
+  class      Class        @relation(fields: [classId], references: [classId], onUpdate: Cascade, map: "fk_classid")
+  course     Course       @relation(fields: [courseCode], references: [courseCode], onUpdate: Cascade, map: "fk_courseid")
+  teacher    Teacher      @relation(fields: [teacherId], references: [teacherId], onUpdate: Cascade, map: "fk_teacherid")
 
   @@unique([courseCode, classId])
   @@map("courseUndertaken")
 }
 
 model Student {
-  studentId String @id @default(cuid())
-  name      String
-  email     String @unique
-  usn       String @unique @db.VarChar(10)
-  password  String
+  studentId     String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  usn           String   @unique @db.VarChar(10)
+  password      String
+  admissionDate DateTime
 
-  studentDetails StudentDetails?
-  classId        String[]
+  studentDetails          StudentDetails?
+  classId                 String[]
+  attendance              Attendance[]
+  adminAddedStudentEmails AdminAddedStudentEmail?
 
   @@map("student")
 }
@@ -81,15 +103,17 @@ model StudentDetails {
 }
 
 model Teacher {
-  teacherId  String @id @default(cuid())
-  name       String
-  email      String @unique
-  employeeId String @unique
-  password   String
+  teacherId   String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  employeeId  String   @unique
+  password    String
+  joiningDate DateTime
 
-  courseUndertaken CourseUndertaken[]
-  teacherDetails   TeacherDetails?
-  classTeacher     ClassTeacher[]
+  courseUndertaken         CourseUndertaken[]
+  teacherDetails           TeacherDetails?
+  classTeacher             ClassTeacher[]
+  adminAddedTeacherDetails AdminAddedTeacherEmail?
 
   @@map("teacher")
 }
@@ -132,6 +156,20 @@ model Admin {
   phNo        String?     @db.VarChar(10)
 
   @@map("admin")
+}
+
+model Attendance {
+  attendanceId     String @id @default(cuid())
+  courseObjId      String
+  studentId        String
+  classesAttended  Int
+  classesConducted Int
+
+  courseObj CourseUndertaken @relation(fields: [courseObjId], references: [courseObjId])
+  student   Student          @relation(fields: [studentId], references: [studentId])
+
+  @@unique([courseObjId, studentId])
+  @@map("attendance")
 }
 
 enum genderenum {
